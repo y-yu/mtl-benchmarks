@@ -9,9 +9,11 @@ import ck.benchmarks.IrwsInstances._
 import ck.benchmarks.Test._
 import ck.benchmarks.ZioInstances._
 import ck.benchmarks.ZPureInstances._
+import org.atnos.eff.Eff
 import org.openjdk.jmh.annotations.{ State => S, _ }
 import zio.internal.Platform
 import zio.{ BootstrapRuntime, Ref, Runtime, ZEnv, ZLayer }
+import org.atnos.eff.syntax.all._
 
 @S(Scope.Thread)
 @BenchmarkMode(Array(Mode.Throughput))
@@ -37,6 +39,16 @@ class Benchmarks {
   @Benchmark
   def ZPure(): Unit =
     testZPure.provide(Env("config")).runAll(State(2))
+
+  @Benchmark
+  def eff(): Unit =
+    Eff.run(
+      testEff
+        .runReader(Env("config"))
+        .runState(State(2))
+        .runEither[Throwable]
+        .runWriter[Chain[Event]]
+    )
 
   @Benchmark
   def MTLZIO(): Unit =
